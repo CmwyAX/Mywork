@@ -1,0 +1,679 @@
+#include<iostream>
+#include<string>
+#include<cstring>
+#include<algorithm>
+#include<stack>
+#include"demand.h"
+
+constexpr auto maxtime = 9999;
+constexpr auto maxmoney = 9999;
+
+using namespace std;
+extern vector<vector<vector<imfo> > > coach;
+extern vector<vector<vector<imfo> > > air;
+extern vector<vector<vector<imfo> > > train;
+demand::demand(int dpt,int avi,int stg):departure(dpt),arrvial(avi),strategy(stg)
+{
+	bound = 0;
+	char ch = '\0';
+	string str;
+	cout << "请输入出发城市:";
+	getline(cin, str);
+	departure=nametonum(str);
+	cout << "请输入目的城市:";
+	getline(cin, str);
+	if (str.empty())
+	{
+		getline(cin, str);
+	}
+	arrvial=nametonum(str);
+	cout << "请输入想要途径的城市(输入无代表不途径任何城市)：";
+	while (ch != '\n')
+	{
+		cin >> str;
+		if (str == "无")
+		{
+			break;
+		}
+		way_city.push_back(nametonum(str));
+		ch = cin.get();
+	}
+	cout << "请输入出发时间范围(小时):";
+	cin >> time_range[0];
+	cin >> time_range[1];
+	cout << "\n1----------最少花费" << endl;
+	cout << "2----------最短时间" << endl;
+	cout << "3----------规定时间内花费最少" << endl;
+	cout << "请输入您的旅行策略:";
+	cin >> strategy;
+	if (strategy == 3)
+	{
+		cout << "请输入规定的时间：";
+		cin >> bound;
+	}
+}
+demand::~demand()
+{
+	cout << "调用demand析构函数" << endl;
+}
+void demand::print()
+{
+	vector<int>::iterator iter;
+	for (iter = way_city.begin();iter != way_city.end();iter++)
+	{
+		cout << *iter;
+	}
+}
+void demand::output()
+{
+	vector<imfo> finalway;
+	switch (strategy)
+	{
+	case 1:
+		least_money(finalway);
+		break;
+	case 2:
+		least_time(finalway);
+		break;
+	case 3:
+		timeband_leastmoney(finalway);
+		break;
+	default:
+		break;
+	}
+	vector<imfo>::iterator iter;
+	if (finalway.empty())
+	{
+		cout << "erro!";
+	}
+	for (iter = finalway.begin();iter != finalway.end();++iter)
+	{
+		iter->printout();
+	}
+}
+int demand::nametonum(string &str)
+{
+	int x = -1;
+	if (str=="长沙") 
+	{
+		x = 0;
+	}
+	if (str=="沈阳") 
+	{
+		x = 1;
+	}
+	if (str=="北京")
+	{
+		x = 2;
+	}
+	if (str=="石家庄")
+	{
+		x = 3;
+	}
+	if (str=="济南")
+	{
+		x = 4;
+	}
+	if (str=="西安")
+	{
+		x = 5;
+	}
+	if (str=="杭州")
+	{
+		x = 6;
+	}
+	if (str=="南昌")
+	{
+		x = 7;
+	}
+	if (str=="武汉")
+	{
+		x = 8;
+	}
+	if (str=="重庆")
+	{
+		x = 9;
+	}
+	if (str== "广州")
+	{
+		x = 10;
+	}
+	if (str=="南宁")
+	{
+		x = 11;
+	}
+	if (x == -1)
+	{
+		cout << "抱歉，目前无该城市信息，请重新输入:";
+		cin >> str;
+		x=nametonum(str);
+	}
+	return x;
+}
+int demand::least_money(vector<imfo>& finalway)
+{
+}
+int demand::least_time(vector<imfo> &finalway)
+{
+	finalway.clear();
+	int cur_arrvial;
+	if (way_city.empty())
+	{
+		cur_arrvial = arrvial;
+	}
+	else
+	{
+		cur_arrvial = way_city[0];
+	}
+	int cur_departure = departure;
+	int min_time = maxtime;
+	int nowtime = 0;
+	int curtime = 0;
+	int total_time = 0;
+	int final_time = maxtime;
+	int temp = cur_arrvial;
+	int count = 0;
+	int path[12], D[12], detime[12] = { 0 };
+	bool visited[12];
+	int **Gra = new int*[12];
+	imfo **Cmpl = new imfo*[12];
+	for (int i = 0;i < 12;i++)
+	{
+		Cmpl[i] = new imfo[12];
+		Gra[i] = new int[12];
+	}
+	vector<int> finalroad;
+	vector<int> temproad;
+	vector<int> nowroad;
+	
+	vector<int>::iterator city_iter;
+	vector<int>::iterator final_iter=finalroad.begin();
+	vector<int>::iterator cur_iter = finalroad.begin();
+	vector<int>::iterator nowroad_iter = nowroad.begin();
+	finalroad.push_back(departure);
+	temproad.push_back(departure);
+	count = way_city.size();
+	vector<vector<int>> city_pass(factorial(count), vector<int>(0));
+	if (count != 0)
+	{
+		printRecurve(way_city, city_pass, count - 1, 0);
+	}
+	for (int num = 0;num < factorial(count);num++)
+	{
+		city_pass[num].push_back(arrvial);
+		//cur_arrvial = way_city[0];
+		cur_departure = departure;
+		temp = cur_arrvial;
+		for (city_iter = city_pass[num].begin();city_iter != city_pass[num].end();city_iter++)
+		{
+			cur_arrvial = *city_iter;
+			/*初始化图*/
+			for (int i = 0; i < 12; i++)
+			{
+				for (int j = 0; j < 12; j++)
+				{
+					Gra[i][j] = maxtime;
+				}
+				visited[i] = false;
+				path[i] = -1;
+			}
+			if (city_iter == city_pass[num].begin())
+			{
+				initial_Grapah(Gra,time_range, detime, cur_departure);
+				for (int judge = 0;judge < 12;judge++)
+				{
+					if (Gra[departure][judge] != maxtime)
+					{
+						judge = 12;
+						finalway.clear();
+					}
+					if (judge == 11)
+					{
+						cout << "该时间范围内无法完成需求!";
+						return;
+					}
+				}
+			}
+			else {
+				initial_Grapah(Gra,nowtime, detime, cur_departure);
+			}
+			cur_arrvial = *city_iter;
+			/*迪杰斯特拉*/
+			for (int i = 0;i < 12;i++)
+			{
+				D[i] = Gra[cur_departure][i];
+				if (D[i] < maxtime)
+				{
+					path[i] = cur_departure;
+				}
+				else
+				{
+					path[i] = -1;
+				}
+			}
+			visited[cur_departure] = true;
+			D[cur_departure] = 0;
+			int min, count = 0, i = 0;
+			for (int k = 0;k < 12;k++)
+			{
+				min = maxtime;
+				for (int w = 0;w < 12;w++)
+				{
+					if (!visited[w] && D[w] < min)
+					{
+						i = w;
+						min = D[w];
+					}
+				}
+				if (city_iter == city_pass[num].begin())
+				{
+					nowtime = (detime[find_detime(path, i)] + D[i]) % 24;
+				}
+				else {
+					nowtime = (D[i] + nowtime) % 24;
+				}
+				visited[i] = true;
+				renew_Grapah(Gra,nowtime);
+				for (int w = 0;w < 12;w++)
+				{
+					if (!visited[w] && (D[i] + Gra[i][w] < D[w]))
+					{
+						D[w] = D[i] + Gra[i][w];
+						path[w] = i;
+					}
+				}
+			}
+			if (city_iter == city_pass[num].begin())
+			{
+				nowtime = (detime[find_detime(path, cur_arrvial)] + D[cur_arrvial]) % 24;
+				curtime = nowtime;
+			}
+			else
+			{
+				nowtime = (curtime + D[cur_arrvial]) % 24;
+				curtime = nowtime;
+			}
+			temp = cur_arrvial;
+			total_time += D[temp];
+			/*输出*/
+			while (temp != -1)
+			{
+				nowroad.push_back(temp);
+				temp = path[temp];
+			}
+			reverse(nowroad.begin(), nowroad.end());
+			for (nowroad_iter = ++nowroad.begin();nowroad_iter != nowroad.end();nowroad_iter++)
+			{
+				temproad.push_back(*nowroad_iter);
+			}
+			nowroad.clear();
+	
+			cur_departure = cur_arrvial;
+		}
+		if (total_time < final_time)
+		{
+			finalroad.clear();
+			for (nowroad_iter = temproad.begin();nowroad_iter != temproad.end();nowroad_iter++)
+			{
+				finalroad.push_back(*nowroad_iter);
+			}
+			final_time = total_time;
+		}
+		temproad.clear();
+		temproad.push_back(departure);
+		total_time = 0;
+		
+	}
+	initial_Grapah(Gra, Cmpl, time_range, detime, cur_departure);
+	for (final_iter = finalroad.begin(), nowroad_iter = finalroad.begin();final_iter != finalroad.end();final_iter++)
+	{
+		if (final_iter == finalroad.begin())
+		{
+			continue;
+		}
+
+		if (nowroad_iter == finalroad.begin())
+		{
+			nowtime = (detime[*final_iter] + Gra[*nowroad_iter][*final_iter])%24;
+		}
+		else
+		{
+			nowtime = (nowtime + Gra[*nowroad_iter][*final_iter]) % 24;
+		}
+		finalway.push_back(Cmpl[*nowroad_iter][*final_iter]);
+		renew_Grapah(Gra, Cmpl, nowtime);
+		nowroad_iter ++;
+	}
+	cout <<"总用时:"<< final_time << "小时" << endl;
+	/*释放数组*/
+	for (int i = 0;i < 12;i++)
+	{
+		delete[]Gra[i];
+		delete[]Cmpl[i];
+	}
+	delete Gra;
+	delete Cmpl;
+	return final_time;
+}
+int demand::timeband_leastmoney(vector<imfo>& finalway)
+{
+	bool s[12] = {false};
+	s[departure] = true;
+	int min_money = maxmoney;
+	int nowmoney = 0;
+	int cur_time = 0;
+	int passtime = 0;//一点到另一点的时间
+
+	stack<int> p;//利用栈实现深度遍历
+	p.push(departure);
+	int pnow = p.top();
+	int costOfMinPath = least_money(finalway);
+	if (costOfMinPath < bound)
+	{
+		return costOfMinPath;//最少花费的金钱满足条件就是最终解
+	}
+	int Mintime = least_time(finalway);
+	if (Mintime>bound)
+	{
+		cout << "无法满足条件" << endl;//最短时间无法满足要求及不可能完成要求
+		return -1;
+	}
+	while (p.empty())
+	{
+		pnow = p.top();//当前遍历的节点
+		for (int i = 0;i < 12;i++)
+		{
+			if ()//已经遍历的节点
+			{
+				continue;
+			}
+			for (vector<imfo>::iterator iter = air[pnow][i].begin();iter != air[pnow][i].end();iter++)
+			{
+				if (iter->Get_price()< maxmoney)//代表两点间有路径
+				{
+					if (iter->Get_arrival_time() < iter->Get_departure_time())
+					{
+						passtime = iter->Get_arrival_time() - iter->Get_departure_time() + 24;
+					}
+					else
+					{
+						passtime = iter->Get_arrival_time() - iter->Get_departure_time();
+					}
+					if (pnow == departure)
+					{
+						if (iter->Get_departure_time() < time_range[0] || iter->Get_departure_time() > time_range[0])
+						{
+							continue;
+						}
+						cur_time = iter->Get_departure_time();
+					}
+					if (nowmoney + iter->Get_price() > min_money || cur_time+passtime> bound)
+					{
+						continue;//当前花费超过了最小花费
+					}
+				}
+			}
+			
+		}
+	}
+}
+void initial_Grapah(int **Gra,imfo **Cmpl,int time_range[],int detime[],int departure)
+{
+	int min_time, dtime, atime;
+	vector<imfo>::iterator coach_iter;
+	imfo mintime;
+	for (int k = 0; k < 12; k++)
+	{
+		for (int i = 0;i < 12; i++)
+		{
+			min_time = maxtime;
+			if (i == k)
+			{
+				continue;
+			}
+			for (coach_iter = coach[k][i].begin();coach_iter != coach[k][i].end();coach_iter++)
+			{
+				if (coach_iter->Get_departure_time() < time_range[0])
+				{
+					continue;
+				}
+				else {
+					dtime = coach_iter->Get_departure_time();
+					atime = coach_iter->Get_arrival_time();
+					if (atime < dtime)
+					{
+						atime += 24;
+					}
+					if (coach_iter->Get_departure_time() < time_range[1])
+					{
+						if (atime - dtime < min_time)
+						{
+							mintime = *coach_iter;
+							min_time = atime - dtime;
+							if (k == departure)
+							{
+								detime[i] = dtime;
+							}
+						}
+					}
+					else
+					{
+						continue;
+					}
+				}
+			}
+			Gra[k][i] = min_time;
+			Cmpl[k][i] = mintime;
+		}
+	}
+	
+}
+void initial_Grapah(int **Gra, int time_range[], int detime[], int departure)
+{
+	int min_time, dtime, atime;
+	vector<imfo>::iterator coach_iter;
+	for (int k = 0; k < 12; k++)
+	{
+		for (int i = 0;i < 12; i++)
+		{
+			min_time = maxtime;
+			if (i == k)
+			{
+				continue;
+			}
+			for (coach_iter = coach[k][i].begin();coach_iter != coach[k][i].end();coach_iter++)
+			{
+				if (coach_iter->Get_departure_time() < time_range[0])
+				{
+					continue;
+				}
+				else {
+					dtime = coach_iter->Get_departure_time();
+					atime = coach_iter->Get_arrival_time();
+					if (atime < dtime)
+					{
+						atime += 24;
+					}
+					if (coach_iter->Get_departure_time() < time_range[1])
+					{
+						if (atime - dtime < min_time)
+						{
+							min_time = atime - dtime;
+							if (k == departure)
+							{
+								detime[i] = dtime;
+							}
+						}
+					}
+					else
+					{
+						continue;
+					}
+				}
+			}
+			Gra[k][i] = min_time;
+		}
+	}
+
+}
+void initial_Grapah(int **Gra, int nowtime, int detime[], int departure)
+{
+	int min_time, dtime = 0, atime = 0, wait_time = 0;
+	vector<imfo>::iterator coach_iter;
+	for (int k = 0; k < 12; k++)
+	{
+		for (int i = 0;i < 12;i++)
+		{
+			min_time = maxtime;
+			if (i == k)
+			{
+				continue;
+			}
+			for (coach_iter = coach[k][i].begin();coach_iter != coach[k][i].end();coach_iter++)
+			{
+				dtime = coach_iter->Get_departure_time();
+				atime = coach_iter->Get_arrival_time();
+				if (dtime < nowtime)
+				{
+					wait_time = dtime + 24 - nowtime;
+				}
+				else
+				{
+					wait_time = dtime - nowtime;
+				}
+				if (atime < dtime)
+				{
+					atime += 24;
+				}
+				if (atime - dtime + wait_time < min_time)
+				{
+					min_time = atime - dtime + wait_time;
+					if (k == departure)
+					{
+						detime[i] = dtime;
+					}
+				}
+			}
+			Gra[k][i] = min_time;
+		}
+	}
+
+}
+void renew_Grapah(int **Gra, imfo **Cmpl, int nowtime)
+{
+	int min_time, dtime=0, atime=0,wait_time=0;
+	vector<imfo>::iterator coach_iter;
+	imfo mintime;
+	for (int k = 0; k < 12; k++)
+	{
+		for (int i = 0;i < 12;i++)
+		{
+			min_time = maxtime;
+			if (i == k)
+			{
+				continue;
+			}
+			for (coach_iter = coach[k][i].begin();coach_iter != coach[k][i].end();coach_iter++)
+			{
+				dtime = coach_iter->Get_departure_time();
+				atime = coach_iter->Get_arrival_time();
+				if (dtime < nowtime)
+				{
+					wait_time = dtime + 24 - nowtime;
+				}
+				else
+				{
+					wait_time = dtime - nowtime;
+				}
+				if (atime < dtime)
+				{
+					atime += 24;
+				}
+				if (atime - dtime + wait_time < min_time)
+				{
+					mintime = *coach_iter;
+					min_time = atime - dtime + wait_time;
+				}
+			}
+			Gra[k][i] = min_time;
+			Cmpl[k][i] = mintime;
+		}
+	}
+}
+void renew_Grapah(int **Gra, int nowtime)
+{
+	int min_time, dtime = 0, atime = 0, wait_time = 0;
+	vector<imfo>::iterator coach_iter;
+	for (int k = 0; k < 12; k++)
+	{
+		for (int i = 0;i < 12;i++)
+		{
+			min_time = maxtime;
+			if (i == k)
+			{
+				continue;
+			}
+			for (coach_iter = coach[k][i].begin();coach_iter != coach[k][i].end();coach_iter++)
+			{
+				dtime = coach_iter->Get_departure_time();
+				atime = coach_iter->Get_arrival_time();
+				if (dtime < nowtime)
+				{
+					wait_time = dtime + 24 - nowtime;
+				}
+				else
+				{
+					wait_time = dtime - nowtime;
+				}
+				if (atime < dtime)
+				{
+					atime += 24;
+				}
+				if (atime - dtime + wait_time < min_time)
+				{
+					min_time = atime - dtime + wait_time;
+				}
+			}
+			Gra[k][i] = min_time;
+		}
+	}
+}
+int find_detime(int path[],int i)
+{
+	while (path[path[i]] != -1)
+	{
+		i = path[i];
+	}
+	return i;
+}
+void printRecurve(vector<int> a,vector<vector<int> >&b ,int len, int k)
+{
+	static int count = 0;
+	if (len == k)
+	{
+		for (int i = 0; i <= len; ++i)
+		{
+			b[count].push_back(a[i]);
+			
+		}
+		count++;
+	}
+	else
+	{
+		for (int idx = k; idx <= len; ++idx)
+		{
+			swap(a[idx], a[k]);
+			printRecurve(a,b, len, k + 1);
+			swap(a[idx], a[k]);
+		}
+	}
+}
+int factorial(int a)
+{
+	int result = 1;
+	while (a != 0)
+	{
+		result *= a--;
+	}
+	return result;
+}
