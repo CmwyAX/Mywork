@@ -310,7 +310,7 @@ int demand::least_money(vector<imfo> &finalway)
 	return least_money;
 
 }
-int demand::least_time(vector<imfo> &finalway)
+int demand::least_time(vector<imfo>& finalway)
 {
 	finalway.clear();
 	int cur_arrvial;
@@ -342,144 +342,136 @@ int demand::least_time(vector<imfo> &finalway)
 	vector<int> finalroad;
 	vector<int> temproad;
 	vector<int> nowroad;
-	
+
 	vector<int>::iterator city_iter;
-	vector<int>::iterator final_iter=finalroad.begin();
+	vector<int>::iterator final_iter = finalroad.begin();
 	vector<int>::iterator cur_iter = finalroad.begin();
 	vector<int>::iterator nowroad_iter = nowroad.begin();
 	finalroad.push_back(departure);
 	temproad.push_back(departure);
 	count = way_city.size();
-	vector<vector<int>> city_pass(factorial(count), vector<int>(0));
-	if (count != 0)
+	vector<int> city_pass(way_city);
+	city_pass.push_back(arrvial);
+	cur_departure = departure;
+	for (city_iter = city_pass.begin();city_iter != city_pass.end();city_iter++)
 	{
-		printRecurve(way_city, city_pass, count - 1, 0);
-	}
-	for (int num = 0;num < factorial(count);num++)
-	{
-		city_pass[num].push_back(arrvial);
-		//cur_arrvial = way_city[0];
-		cur_departure = departure;
-		temp = cur_arrvial;
-		for (city_iter = city_pass[num].begin();city_iter != city_pass[num].end();city_iter++)
+		cur_arrvial = *city_iter;
+		/*初始化图*/
+		for (int i = 0; i < 12; i++)
 		{
-			cur_arrvial = *city_iter;
-			/*初始化图*/
-			for (int i = 0; i < 12; i++)
+			for (int j = 0; j < 12; j++)
 			{
-				for (int j = 0; j < 12; j++)
-				{
-					Gra[i][j] = maxtime;
-				}
-				visited[i] = false;
-				path[i] = -1;
+				Gra[i][j] = maxtime;
 			}
-			if (city_iter == city_pass[num].begin())
+			visited[i] = false;
+			path[i] = -1;
+		}
+		if (city_iter == city_pass.begin())
+		{
+			initial_Grapah(Gra, time_range, detime, cur_departure);
+			for (int judge = 0;judge < 12;judge++)
 			{
-				initial_Grapah(Gra,time_range, detime, cur_departure);
-				for (int judge = 0;judge < 12;judge++)
+				if (Gra[departure][judge] != maxtime)
 				{
-					if (Gra[departure][judge] != maxtime)
-					{
-						judge = 12;
-						finalway.clear();
-					}
-					if (judge == 11)
-					{
-						cout << "该时间范围内无法完成需求!";
-						return -1;
-					}
+					judge = 12;
+					finalway.clear();
+				}
+				if (judge == 11)
+				{
+					cout << "该时间范围内无法完成需求!";
+					return -1;
 				}
 			}
-			else {
-				initial_Grapah(Gra,nowtime, detime, cur_departure);
-			}
-			cur_arrvial = *city_iter;
-			/*迪杰斯特拉*/
-			for (int i = 0;i < 12;i++)
+		}
+		else {
+			initial_Grapah(Gra, nowtime, detime, cur_departure);
+		}
+		/*迪杰斯特拉*/
+		for (int i = 0;i < 12;i++)
+		{
+			D[i] = Gra[cur_departure][i];
+			if (D[i] < maxtime)
 			{
-				D[i] = Gra[cur_departure][i];
-				if (D[i] < maxtime)
-				{
-					path[i] = cur_departure;
-				}
-				else
-				{
-					path[i] = -1;
-				}
-			}
-			visited[cur_departure] = true;
-			D[cur_departure] = 0;
-			int min, count = 0, i = 0;
-			for (int k = 0;k < 12;k++)
-			{
-				min = maxtime;
-				for (int w = 0;w < 12;w++)
-				{
-					if (!visited[w] && D[w] < min)
-					{
-						i = w;
-						min = D[w];
-					}
-				}
-				if (city_iter == city_pass[num].begin())
-				{
-					nowtime = (detime[find_detime(path, i)] + D[i]) % 24;
-				}
-				else {
-					nowtime = (D[i] + nowtime) % 24;
-				}
-				visited[i] = true;
-				renew_Grapah(Gra,nowtime);
-				for (int w = 0;w < 12;w++)
-				{
-					if (!visited[w] && (D[i] + Gra[i][w] < D[w]))
-					{
-						D[w] = D[i] + Gra[i][w];
-						path[w] = i;
-					}
-				}
-			}
-			if (city_iter == city_pass[num].begin())
-			{
-				nowtime = (detime[find_detime(path, cur_arrvial)] + D[cur_arrvial]) % 24;
-				curtime = nowtime;
+				path[i] = cur_departure;
 			}
 			else
 			{
-				nowtime = (curtime + D[cur_arrvial]) % 24;
-				curtime = nowtime;
+				path[i] = -1;
 			}
-			temp = cur_arrvial;
-			total_time += D[temp];
-			/*输出*/
-			while (temp != -1)
-			{
-				nowroad.push_back(temp);
-				temp = path[temp];
-			}
-			reverse(nowroad.begin(), nowroad.end());
-			for (nowroad_iter = ++nowroad.begin();nowroad_iter != nowroad.end();nowroad_iter++)
-			{
-				temproad.push_back(*nowroad_iter);
-			}
-			nowroad.clear();
-	
-			cur_departure = cur_arrvial;
 		}
-		if (total_time < final_time)
+		visited[cur_departure] = true;
+		D[cur_departure] = 0;
+		int min, count = 0, i = 0;
+		for (int k = 0;k < 12;k++)
 		{
-			finalroad.clear();
-			for (nowroad_iter = temproad.begin();nowroad_iter != temproad.end();nowroad_iter++)
+			min = maxtime;
+			if (cur_departure == 0 && k == 0)
 			{
-				finalroad.push_back(*nowroad_iter);
+				cout << Gra[0][9] << endl;
+				//cout << nowtime << endl;
 			}
-			final_time = total_time;
+			for (int w = 0;w < 12;w++)
+			{
+				if (!visited[w] && D[w] < min)
+				{
+					i = w;
+					min = D[w];
+				}
+			}
+			/*if (city_iter == city_pass.begin())
+			{
+				nowtime = (detime[find_detime(path, i)] + D[i]) % 24;
+			}
+			else {
+				nowtime = (D[i] + nowtime) % 24;
+			}*/
+			nowtime = (detime[find_detime(path, i)] + D[i]) % 24;
+			visited[i] = true;
+			renew_Grapah(Gra, nowtime);
+
+			for (int w = 0;w < 12;w++)
+			{
+
+				if (!visited[w] && (D[i] + Gra[i][w] < D[w]))
+				{
+					D[w] = D[i] + Gra[i][w];
+					path[w] = i;
+				}
+			}
 		}
-		temproad.clear();
-		temproad.push_back(departure);
-		total_time = 0;
-		
+		if (city_iter == city_pass.begin())
+		{
+			nowtime = (detime[find_detime(path, cur_arrvial)] + D[cur_arrvial]) % 24;
+			curtime = nowtime;
+		}
+		else
+		{
+			nowtime = (curtime + D[cur_arrvial]) % 24;
+			curtime = nowtime;
+		}
+		temp = cur_arrvial;
+		total_time += D[temp];
+		/*输出*/
+		while (temp != -1)
+		{
+			nowroad.push_back(temp);
+			temp = path[temp];
+		}
+		reverse(nowroad.begin(), nowroad.end());
+		for (nowroad_iter = ++nowroad.begin();nowroad_iter != nowroad.end();nowroad_iter++)
+		{
+			temproad.push_back(*nowroad_iter);
+		}
+		nowroad.clear();
+		cur_departure = cur_arrvial;
+	}
+	if (total_time < final_time)
+	{
+		finalroad.clear();
+		for (nowroad_iter = temproad.begin();nowroad_iter != temproad.end();nowroad_iter++)
+		{
+			finalroad.push_back(*nowroad_iter);
+		}
 	}
 	initial_Grapah(Gra, Cmpl, time_range, detime, cur_departure);
 	for (final_iter = finalroad.begin(), nowroad_iter = finalroad.begin();final_iter != finalroad.end();final_iter++)
@@ -491,7 +483,7 @@ int demand::least_time(vector<imfo> &finalway)
 
 		if (nowroad_iter == finalroad.begin())
 		{
-			nowtime = (detime[*final_iter] + Gra[*nowroad_iter][*final_iter])%24;
+			nowtime = (detime[*final_iter] + Gra[*nowroad_iter][*final_iter]) % 24;
 		}
 		else
 		{
@@ -499,9 +491,9 @@ int demand::least_time(vector<imfo> &finalway)
 		}
 		finalway.push_back(Cmpl[*nowroad_iter][*final_iter]);
 		renew_Grapah(Gra, Cmpl, nowtime);
-		nowroad_iter ++;
+		nowroad_iter++;
 	}
-	cout <<"总用时:"<< final_time << "小时" << endl;
+	cout << "总用时:" << total_time << "小时" << endl;
 	/*释放数组*/
 	for (int i = 0;i < 12;i++)
 	{
@@ -514,190 +506,146 @@ int demand::least_time(vector<imfo> &finalway)
 }
 int demand::timeband_leastmoney(vector<imfo>& finalway)
 {
-	int s[12][12] = {0}; 
-	float min_money = maxmoney;
-	float nowmoney = 0;
-	int travel_time = 0;
-	int passtime = 0;//一点到另一点的时间
-	int waittime = 0;//等待的时间
-	int tag = 0;//判断是否遍历到下一节点
-	int lastout = -1;//弹出的城市
-	int size = finalway.size();//存储结果的大小
-	bool city_passed[12] = { false };//判断是否经过必经的城市
-	bool isall = false;
-	bool isfull = false;
-	
-	stack<int>time_passed;//存储每次旅行(两城市之间)消耗的总时间
-	stack<int> p;//利用栈实现深度遍历
-	vector<imfo>tempway;
+	stack<int> p;
+	vector<imfo>temp;
+	vector<int>time_mem;
+	vector<float>price_mem;
 	p.push(departure);
-	city_passed[departure] = true;
-	int pnow = p.top();
-	
-int costOfMinPath = least_money(finalway);
-	if (costOfMinPath < bound)
-	{
-		return costOfMinPath;//最少花费的金钱满足条件就是最终解
-	}
-	int Mintime = least_time(finalway);
-	if (Mintime>bound)
-	{
-		cout << "无法满足条件" << endl;//最短时间无法满足要求及不可能完成要求
-		return -1;
-	}
+	int visited[12][12] = { 0 };
+	int s[12] = { 0 };
+	int pnow;
+	int tag = 0;
+	int lastout = -1;
+	int total_time = 0;
+	int total_money = 0;
+	int min_money = maxmoney;
+	int passtime = 0;
+	int waittime = 0;
+	int travel_time = 0;
+	int i = 0;//迭代
+	float min_price = 0;
 
+	s[departure] = 1;
 	while (!p.empty())
 	{
-		pnow = p.top();//当前遍历的节点
-		for (int i = 0;i < 12;i++)
+		tag = 0;
+		pnow = p.top();
+		for (i = 0;i < 12;i++)
 		{
-			
 			if (pnow == arrvial)
 			{
 				break;
 			}
-			if (s[pnow][i]== air[pnow][i].size()/*||i<=lastout*/)//已经遍历的节点
+			if (i == pnow || s[i] == 1)
 			{
 				continue;
 			}
-			if (air[pnow][i].size())//代表两点间有路径
+			if (air[pnow][i].size() > 0 && visited[pnow][i] < air[pnow][i].size())
 			{
-				
-				if (air[pnow][i][s[pnow][i]].Get_arrival_time() < air[pnow][i][s[pnow][i]].Get_departure_time())
-				{
-					passtime = air[pnow][i][s[pnow][i]].Get_arrival_time() - air[pnow][i][s[pnow][i]].Get_departure_time() + 24;
-				}
-				else
-				{
-					passtime = air[pnow][i][s[pnow][i]].Get_arrival_time() - air[pnow][i][s[pnow][i]].Get_departure_time();
-				}
 				if (pnow == departure)
 				{
-					if (air[pnow][i][s[pnow][i]].Get_departure_time() < time_range[0] || air[pnow][i][s[pnow][i]].Get_departure_time() > time_range[1])
+					if (air[pnow][i][visited[pnow][i]].Get_departure_time() < time_range[0] || air[pnow][i][visited[pnow][i]].Get_departure_time() > time_range[1])
 					{
 						continue;
 					}
-					travel_time = air[pnow][i][s[pnow][i]].Get_departure_time();
+					waittime = 0;
+					travel_time = air[pnow][i][visited[pnow][i]].Get_departure_time();
 				}
-				if (nowmoney + air[pnow][i][s[pnow][i]].Get_price() > min_money || passtime> bound)
+				else
 				{
-					continue;//当前花费超过了最小花费
-				}
-				if (i == arrvial)//找到一条路径
-				{
-					
-					//判断是否经过所有途径城市
-					isall = true;
-					for (vector<int>::iterator iter = way_city.begin();iter != way_city.end();iter++)
+					if (air[pnow][i][visited[pnow][i]].Get_departure_time() < travel_time)
 					{
-						if (!city_passed[*iter])
+						waittime = 24 + (air[pnow][i][visited[pnow][i]].Get_departure_time() - travel_time);
+					}
+					else
+					{
+						waittime = air[pnow][i][visited[pnow][i]].Get_departure_time() - travel_time;
+					}
+
+				}
+				if (air[pnow][i][visited[pnow][i]].Get_arrival_time() < air[pnow][i][visited[pnow][i]].Get_departure_time())
+				{
+					passtime = air[pnow][i][visited[pnow][i]].Get_arrival_time() - air[pnow][i][visited[pnow][i]].Get_departure_time() + 24;
+				}
+				else
+				{
+					passtime = air[pnow][i][visited[pnow][i]].Get_arrival_time() - air[pnow][i][visited[pnow][i]].Get_departure_time();
+				}
+
+				time_mem.push_back(passtime + waittime);
+				price_mem.push_back(air[pnow][i][visited[pnow][i]].Get_price());
+				visited[pnow][i]++;
+				for (int j = 0;j < time_mem.size();j++)
+				{
+					total_time += time_mem[j];
+				}
+				for (int j = 0;j < time_mem.size();j++)
+				{
+					total_money += price_mem[j];
+				}
+				if (total_time > bound || total_money >= min_money)
+				{
+					price_mem.pop_back();
+					time_mem.pop_back();
+					total_time = 0;
+					total_money = 0;
+					continue;
+				}
+				travel_time = (travel_time + passtime + waittime) % 24;
+
+				p.push(i);
+				temp.push_back(air[pnow][i][visited[pnow][i] - 1]);
+				s[i] = 1;
+				tag = 1;
+				if (i == arrvial)
+				{
+					if (!ismeet(way_city, s))
+					{
+						tag = 0;
+					}
+					else
+					{
+						if (total_money < min_money)
 						{
-							isall = false;
-							break;
+							min_money = total_money;
+							finalway.clear();
+							for (auto iter : temp)
+							{
+								finalway.push_back(iter);
+							}
 						}
 					}
-					if (!isall)
-					{
-						break;
-					}
-					nowmoney += air[pnow][i][s[pnow][i]].Get_price();
-					travel_time += passtime;
-					min_money = nowmoney;
-					p.push(i);//选中此城市压入栈中
-					//finaway 赋值
-					time_passed.push(passtime);
-					tempway.push_back(air[pnow][i][s[pnow][i]]);
-					s[pnow][i]++;
-
-					if (nowmoney < min_money)
-					{
-						finalway.clear();
-						for (vector<imfo>::iterator p = tempway.begin();p != tempway.end();p++)
-						{
-							finalway.push_back(*p);
-						}
-						min_money = nowmoney;
-					}
-					
-
-
-					break;
 				}
-				else//找到下一节点
-				{
-					tag = 1;//标识本次遍历找到了下一节点
-					nowmoney += air[pnow][i][s[pnow][i]].Get_price();
-					travel_time += passtime;
-					p.push(i);
-					city_passed[i] = true;
-					tempway.push_back(air[pnow][i][s[pnow][i]]);
-					time_passed.push(passtime);
-					s[pnow][i]++;
-					lastout = -1;
-					break;
-				}
+				total_time = 0;
+				total_money = 0;
+				break;
 			}
-			
 		}
 		if (tag == 0)
 		{
 			lastout = p.top();
+			for (int j = 0;j < 12;j++)
+			{
+				visited[lastout][j] = 0;
+			}
+			s[lastout] = 0;
 			p.pop();
-			city_passed[lastout] = false;
-			if (p.empty())
+
+			if (lastout != departure)
 			{
-				break;
+				temp.pop_back();
+				travel_time = (travel_time - time_mem.back()) % 24;
+				time_mem.pop_back();
+				price_mem.pop_back();
 			}
-			pnow = p.top();
-			isfull = true;
-			/*判断lastout是否为终点*/
-			if (lastout == arrvial)
-			{
-				for (int i = 0;i < 12;i++)
-				{
-					s[lastout][i] = 0;
-				}
-			}
-			else
-			{
-				for (int i = 0;i < 12;i++)//冗余
-				{
-					if (s[lastout][i] != air[lastout][i].size())
-					{
-						isfull = false;
-						break;
-					}
-				}
-				if (isfull)
-				{
-					for (int i = 0;i < 12;i++)
-					{
-						s[lastout][i] = 0;
-					}
-				}
-			}
-			size = tempway.size();
-			nowmoney -= tempway[size - 1].Get_price();
-			travel_time -= time_passed.top();
-			tempway.pop_back();
-			time_passed.pop();
 		}
 		tag = 0;
-		travel_time = 0;
-		passtime = 0;//一点到另一点的时间
-		waittime = 0;//等待的时间
-		nowmoney = 0;
-		for (vector<imfo>::iterator p = tempway.begin();p != tempway.end();p++)
-		{
-			p->print();
-		}
-		cout << endl;
 	}
-	
+	return 1;
 }
 
 
-void demand::DFS(vector<imfo>& finalway)
+/*void demand::DFS(vector<imfo>& finalway)
 {
 	stack<int> p;
 	vector<imfo>temp;
@@ -835,7 +783,7 @@ void demand::DFS(vector<imfo>& finalway)
 		tag = 0;
 	}
 	return;
-}
+}*/
 void initial_Grapah(int **Gra,imfo **Cmpl,int time_range[],int detime[],int departure)
 {
 	int min_time, dtime, atime;

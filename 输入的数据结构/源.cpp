@@ -23,8 +23,7 @@ int main(void)
 	//coach[1][2][0].printout();
 
 	demand client;
-	vector<imfo> way;
-	/*vector<imfo> finalway;
+	vector<imfo> finalway;
 	
 	client.least_time(finalway);
 	vector<imfo>::iterator iter;
@@ -35,11 +34,6 @@ int main(void)
 	for (iter = finalway.begin();iter != finalway.end();++iter)
 	{
 		iter->printout();
-	}*/
-	client.DFS(way);
-	for (auto p : way)
-	{
-		p.printout();
 	}
 	system("pause");
 	return 0;

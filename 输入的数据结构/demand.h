@@ -13,8 +13,9 @@ public:
 	int nametonum(string &str);
 	int least_money(vector<imfo> &finalway);
 	int least_time(vector<imfo> &finalway);
+	//int lt(vector<imfo> &finalway);
 	int timeband_leastmoney(vector<imfo> &finalway);
-	void DFS(vector<imfo> &finalway);
+	//void DFS(vector<imfo> &finalway);
 	void print();
 	void output();
 private:

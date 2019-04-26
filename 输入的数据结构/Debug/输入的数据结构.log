@@ -1,1 +1,12 @@
-﻿  输入的数据结构.vcxproj -> C:\Users\10980\Desktop\数据结构大作业\输入的数据结构\Debug\输入的数据结构.exe
+﻿  demand.cpp
+c:\users\10980\desktop\数据结构大作业\输入的数据结构\输入的数据结构\demand.cpp(310): warning C4244: “return”: 从“float”转换到“int”，可能丢失数据
+c:\users\10980\desktop\数据结构大作业\输入的数据结构\输入的数据结构\demand.cpp(178): warning C4101: “tmp”: 未引用的局部变量
+c:\users\10980\desktop\数据结构大作业\输入的数据结构\输入的数据结构\demand.cpp(543): warning C4018: “<”: 有符号/无符号不匹配
+c:\users\10980\desktop\数据结构大作业\输入的数据结构\输入的数据结构\demand.cpp(578): warning C4018: “<”: 有符号/无符号不匹配
+c:\users\10980\desktop\数据结构大作业\输入的数据结构\输入的数据结构\demand.cpp(582): warning C4018: “<”: 有符号/无符号不匹配
+c:\users\10980\desktop\数据结构大作业\输入的数据结构\输入的数据结构\demand.cpp(584): warning C4244: “+=”: 从“_Ty”转换到“int”，可能丢失数据
+          with
+          [
+              _Ty=float
+          ]
+  输入的数据结构.vcxproj -> C:\Users\10980\Desktop\数据结构大作业\输入的数据结构\Debug\输入的数据结构.exe
